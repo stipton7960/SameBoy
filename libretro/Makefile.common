@@ -1,4 +1,4 @@
-VERSION     := 0.12.0
+VERSION     := 0.13.1
 
 INCFLAGS    := -I$(CORE_DIR)
 
@@ -15,7 +15,6 @@ SOURCES_C   := $(CORE_DIR)/Core/gb.c \
                $(CORE_DIR)/Core/sm83_cpu.c \
                $(CORE_DIR)/Core/joypad.c \
                $(CORE_DIR)/Core/save_state.c \
-               $(CORE_DIR)/Core/random.c \
                $(CORE_DIR)/Core/rumble.c \
                $(CORE_DIR)/libretro/agb_boot.c \
                $(CORE_DIR)/libretro/cgb_boot.c \
