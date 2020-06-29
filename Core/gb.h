@@ -52,6 +52,10 @@
 #error Unable to detect endianess
 #endif
 
+#if __GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 8)
+#define __builtin_bswap16(x) ({ typeof(x) _x = (x); _x >> 8 | _x << 8; })
+#endif
+
 typedef struct {
     struct {
         uint8_t r, g, b;
@@ -602,7 +606,7 @@ struct GB_gameboy_internal_s {
         GB_icd_vreset_callback_t icd_vreset_callback;
         GB_read_memory_callback_t read_memory_callback;
         GB_boot_rom_load_callback_t boot_rom_load_callback;
-               
+        GB_print_image_callback_t printer_callback;
         /* IR */
         uint64_t cycles_since_ir_change; // In 8MHz units
         uint64_t cycles_since_input_ir_change; // In 8MHz units

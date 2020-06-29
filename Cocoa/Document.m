@@ -8,6 +8,7 @@
 #include "GBMemoryByteArray.h"
 #include "GBWarningPopover.h"
 #include "GBCheatWindowController.h"
+#include "GBTerminalTextFieldCell.h"
 
 /* Todo: The general Objective-C coding style conflicts with SameBoy's. This file needs a cleanup. */
 /* Todo: Split into category files! This is so messy!!! */
@@ -546,6 +547,7 @@ static void rumbleCallback(GB_gameboy_t *gb, double amp)
     self.debuggerSideViewInput.textColor = [NSColor whiteColor];
     self.debuggerSideViewInput.defaultParagraphStyle = paragraph_style;
     [self.debuggerSideViewInput setString:@"registers\nbacktrace\n"];
+    ((GBTerminalTextFieldCell *)self.consoleInput.cell).gb = &gb;
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(updateSideView)
                                                  name:NSTextDidChangeNotification
@@ -563,16 +565,10 @@ static void rumbleCallback(GB_gameboy_t *gb, double amp)
     self.vramStatusLabel.cell.backgroundStyle = NSBackgroundStyleRaised;
     
     
-    [self.feedSaveButton removeFromSuperview];
     
     self.consoleWindow.title = [NSString stringWithFormat:@"Debug Console – %@", [[self.fileURL path] lastPathComponent]];
     self.debuggerSplitView.dividerColor = [NSColor clearColor];
-    
-    /* contentView.superview.subviews.lastObject is the titlebar view */
-    NSView *titleView = self.printerFeedWindow.contentView.superview.subviews.lastObject;
-    [titleView addSubview: self.feedSaveButton];
-    self.feedSaveButton.frame = (NSRect){{268, 2}, {48, 17}};
-    
+        
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(updateHighpassFilter)
                                                  name:@"GBHighpassFilterChanged"
@@ -645,7 +641,6 @@ static void rumbleCallback(GB_gameboy_t *gb, double amp)
 {
     hex_controller = [[HFController alloc] init];
     [hex_controller setBytesPerColumn:1];
-    [hex_controller setFont:[NSFont userFixedPitchFontOfSize:12]];
     [hex_controller setEditMode:HFOverwriteMode];
     
     [hex_controller setByteArray:[[GBMemoryByteArray alloc] initWithDocument:self]];
@@ -1008,6 +1003,9 @@ static void rumbleCallback(GB_gameboy_t *gb, double amp)
         [debugger_input_queue removeObjectAtIndex:0];
     }
     [has_debugger_input unlockWithCondition:[debugger_input_queue count] != 0];
+    if ((id)input == [NSNull null]) {
+        return NULL;
+    }
     return input? strdup([input UTF8String]): NULL;
 }
 
@@ -1632,13 +1630,24 @@ static void rumbleCallback(GB_gameboy_t *gb, double amp)
                                                      scale:2.0];
         NSRect frame = self.printerFeedWindow.frame;
         frame.size = self.feedImageView.image.size;
+        [self.printerFeedWindow setContentMaxSize:frame.size];
         frame.size.height += self.printerFeedWindow.frame.size.height - self.printerFeedWindow.contentView.frame.size.height;
-        [self.printerFeedWindow setMaxSize:frame.size];
         [self.printerFeedWindow setFrame:frame display:NO animate: self.printerFeedWindow.isVisible];
         [self.printerFeedWindow orderFront:NULL];
     });
     
 }
+
+- (void)printDocument:(id)sender
+{
+    if (self.feedImageView.image.size.height == 0) {
+        NSBeep(); return;
+    }
+    NSImageView *view = [[NSImageView alloc] initWithFrame:(NSRect){{0,0}, self.feedImageView.image.size}];
+    view.image = self.feedImageView.image;
+    [[NSPrintOperation printOperationWithView:view] runOperationModalForWindow:self.printerFeedWindow delegate:nil didRunSelector:NULL contextInfo:NULL];
+}
+
 - (IBAction)savePrinterFeed:(id)sender
 {
     bool shouldResume = running;
@@ -1674,7 +1683,7 @@ static void rumbleCallback(GB_gameboy_t *gb, double amp)
 - (IBAction)connectPrinter:(id)sender
 {
     [self performAtomicBlock:^{
-            accessory = GBAccessoryPrinter;
+        accessory = GBAccessoryPrinter;
         GB_connect_printer(&gb, printImage);
     }];
 }
