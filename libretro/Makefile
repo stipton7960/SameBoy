@@ -144,8 +144,8 @@ else ifeq ($(platform), libnx)
 # Nintendo WiiU
 else ifeq ($(platform), wiiu)
    TARGET := $(TARGET_NAME)_libretro_$(platform).a
-   CC = $(DEVKITPPC)/bin/powerpc-eabi-gcc$(EXE_EXT)
-   AR = $(DEVKITPPC)/bin/powerpc-eabi-ar$(EXE_EXT)
+   CC ?= $(DEVKITPPC)/bin/powerpc-eabi-gcc$(EXE_EXT)
+   AR ?= $(DEVKITPPC)/bin/powerpc-eabi-ar$(EXE_EXT)
    CFLAGS += -DGEKKO -DHW_RVL -DWIIU -mwup -mcpu=750 -meabi -mhard-float -D__ppc__ -DMSB_FIRST -I$(DEVKITPRO)/libogc/include
    CFLAGS += -U__INT32_TYPE__ -U __UINT32_TYPE__ -D__INT32_TYPE__=int
    STATIC_LINKING = 1
@@ -184,9 +184,9 @@ else ifeq ($(platform), emscripten)
    fpic := -fPIC
    SHARED := -shared -Wl,--version-script=$(CORE_DIR)/libretro/link.T -Wl,--no-undefined
 else ifeq ($(platform), vita)
-   TARGET := $(TARGET_NAME)_vita.a
-   CC = arm-vita-eabi-gcc
-   AR = arm-vita-eabi-ar
+   TARGET := $(TARGET_NAME)_libretro_vita.a
+   CC ?= arm-vita-eabi-gcc
+   AR ?= arm-vita-eabi-ar
    CFLAGS += -Wl,-q -O3 -fno-short-enums -fno-optimize-sibling-calls
 	STATIC_LINKING = 1
 
@@ -216,9 +216,9 @@ else ifneq (,$(findstring windows_msvc2017,$(platform)))
 
 	TargetArchMoniker = $(subst $(WinPartition)_,,$(PlatformSuffix))
 
-	CC  = cl.exe
-	CXX = cl.exe
-	LD = link.exe
+	CC  ?= cl.exe
+	CXX ?= cl.exe
+	LD  ?= link.exe
 
 	reg_query = $(call filter_out2,$(subst $2,,$(shell reg query "$2" -v "$1" 2>nul)))
 	fix_path = $(subst $(SPACE),\ ,$(subst \,/,$1))
