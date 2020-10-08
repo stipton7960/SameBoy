@@ -185,8 +185,8 @@ else ifeq ($(platform), emscripten)
    SHARED := -shared -Wl,--version-script=$(CORE_DIR)/libretro/link.T -Wl,--no-undefined
 else ifeq ($(platform), vita)
    TARGET := $(TARGET_NAME)_libretro_vita.a
-   CC ?= arm-vita-eabi-gcc
-   AR ?= arm-vita-eabi-ar
+   CC = arm-vita-eabi-gcc
+   AR = arm-vita-eabi-ar
    CFLAGS += -Wl,-q -O3 -fno-short-enums -fno-optimize-sibling-calls
 	STATIC_LINKING = 1
 
