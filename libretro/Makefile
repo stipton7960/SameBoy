@@ -3,8 +3,6 @@ AR             := ar
 
 CFLAGS := -Wall $(CFLAGS)
 
-VERSION := 0.13.3
-
 GIT_VERSION ?= " $(shell git rev-parse --short HEAD || echo unknown)"
 ifneq ($(GIT_VERSION)," unknown")
    CFLAGS += -DGIT_VERSION=\"$(GIT_VERSION)\"
@@ -18,8 +16,6 @@ filter_out1 = $(filter-out $(firstword $1),$1)
 filter_out2 = $(call filter_out1,$(call filter_out1,$1))
 unixpath = $(subst \,/,$1)
 unixcygpath = /$(subst :,,$(call unixpath,$1))
-
-CFLAGS += -DSAMEBOY_CORE_VERSION=\"$(VERSION)\"
 
 ifeq ($(platform),)
 platform = unix
@@ -92,8 +88,7 @@ else ifeq ($(platform), linux-portable)
    TARGET := $(TARGET_NAME)_libretro.$(EXT)
    fpic := -fPIC -nostdlib
    SHARED := -shared -Wl,--version-script=$(CORE_DIR)/libretro/link.T
-	LIBM :=
-  
+   LIBM :=   
 # (armv7 a7, hard point, neon based) ### 
 # NESC, SNESC, C64 mini 
 else ifeq ($(platform), classic_armv7_a7)
@@ -125,7 +120,6 @@ else ifeq ($(platform), classic_armv7_a7)
 	  endif
 	endif
 #######################################
-
 # Nintendo Switch (libtransistor)
 else ifeq ($(platform), switch)
    TARGET := $(TARGET_NAME)_libretro_$(platform).a
@@ -291,7 +285,6 @@ else
    SHARED := -shared -static-libgcc -static-libstdc++ -s -Wl,--version-script=$(CORE_DIR)/libretro/link.T -Wl,--no-undefined
 endif
 
-#TARGET := $(CORE_DIR)/build/bin/$(TARGET)
 TARGET := $(TARGET)
 
 # To force use of the Unix version instead of the Windows version
@@ -306,6 +299,8 @@ else
 endif
 
 include Makefile.common
+
+CFLAGS += -DSAMEBOY_CORE_VERSION=\"$(VERSION)\"
 
 OBJECTS := $(patsubst $(CORE_DIR)/%.c,$(CORE_DIR)/build/obj/%_libretro.c.o,$(SOURCES_C))
 
@@ -342,7 +337,6 @@ endif
 	echo "};" >> $@
 	echo "const unsigned $(notdir $(@:%.c=%))_length = sizeof($(notdir $(@:%.c=%)));" >> $@
 
-#$(CORE_DIR)/build/bin/BootROMs/%_boot.bin:
 $(CORE_DIR)/BootROMs/prebuilt/%_boot.bin:
 	$(MAKE) -C $(CORE_DIR) $(patsubst $(CORE_DIR)/%,%,$@)
 
