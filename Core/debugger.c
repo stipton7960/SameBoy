@@ -132,7 +132,7 @@ static const char *value_to_string(GB_gameboy_t *gb, uint16_t value, bool prefer
     }
 
     /* Avoid overflow */
-    if (symbol && strlen(symbol->name) > 240) {
+    if (symbol && strlen(symbol->name) >= 240) {
         symbol = NULL;
     }
 
@@ -172,7 +172,7 @@ static const char *debugger_value_to_string(GB_gameboy_t *gb, value_t value, boo
     }
 
     /* Avoid overflow */
-    if (symbol && strlen(symbol->name) > 240) {
+    if (symbol && strlen(symbol->name) >= 240) {
         symbol = NULL;
     }
 
@@ -1533,7 +1533,7 @@ static bool mbc(GB_gameboy_t *gb, char *arguments, char *modifiers, const debugg
     const GB_cartridge_t *cartridge = gb->cartridge_type;
 
     if (cartridge->has_ram) {
-        GB_log(gb, "Cartrdige includes%s RAM: $%x bytes\n", cartridge->has_battery? " battery-backed": "", gb->mbc_ram_size);
+        GB_log(gb, "Cartridge includes%s RAM: $%x bytes\n", cartridge->has_battery? " battery-backed": "", gb->mbc_ram_size);
     }
     else {
         GB_log(gb, "No cartridge RAM\n");
