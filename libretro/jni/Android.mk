@@ -4,8 +4,6 @@ CORE_DIR := $(LOCAL_PATH)/../..
 
 CFLAGS :=
 
-VERSION := 0.13.3
-
 include $(CORE_DIR)/libretro/Makefile.common
 
 GENERATED_SOURCES := $(filter %_boot.c,$(SOURCES_C))

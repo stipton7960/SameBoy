@@ -23,6 +23,7 @@
 #include "sgb.h"
 #include "cheats.h"
 #include "rumble.h"
+#include "workboy.h"
 
 #define GB_STRUCT_VERSION 13
 
@@ -372,6 +373,7 @@ struct GB_gameboy_internal_s {
         GB_printer_t printer;
         uint8_t extra_oam[0xff00 - 0xfea0];
         uint32_t ram_size; // Different between CGB and DMG
+        GB_workboy_t workboy;
     );
 
     /* DMA and HDMA */
@@ -438,7 +440,7 @@ struct GB_gameboy_internal_s {
         bool rumble_state;
         bool cart_ir;
         
-        // TODO: move to huc3 struct when breaking save compat
+        // TODO: move to huc3/mbc3 struct when breaking save compat
         uint8_t huc3_mode;
         uint8_t huc3_access_index;
         uint16_t huc3_minutes, huc3_days;
@@ -446,6 +448,7 @@ struct GB_gameboy_internal_s {
         bool huc3_alarm_enabled;
         uint8_t huc3_read;
         uint8_t huc3_access_flags;
+        bool mbc3_rtc_mapped;
     );
 
 
@@ -607,6 +610,9 @@ struct GB_gameboy_internal_s {
         GB_read_memory_callback_t read_memory_callback;
         GB_boot_rom_load_callback_t boot_rom_load_callback;
         GB_print_image_callback_t printer_callback;
+        GB_workboy_set_time_callback workboy_set_time_callback;
+        GB_workboy_get_time_callback workboy_get_time_callback;
+               
         /* IR */
         uint64_t cycles_since_ir_change; // In 8MHz units
         uint64_t cycles_since_input_ir_change; // In 8MHz units

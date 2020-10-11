@@ -9,6 +9,7 @@
 #include "GBWarningPopover.h"
 #include "GBCheatWindowController.h"
 #include "GBTerminalTextFieldCell.h"
+#include "BigSurToolbar.h"
 
 /* Todo: The general Objective-C coding style conflicts with SameBoy's. This file needs a cleanup. */
 /* Todo: Split into category files! This is so messy!!! */
@@ -46,7 +47,7 @@ enum model {
     bool oamUpdating;
     
     NSMutableData *currentPrinterImageData;
-    enum {GBAccessoryNone, GBAccessoryPrinter} accessory;
+    enum {GBAccessoryNone, GBAccessoryPrinter, GBAccessoryWorkboy} accessory;
     
     bool rom_warning_issued;
     
@@ -135,6 +136,16 @@ static void printImage(GB_gameboy_t *gb, uint32_t *image, uint8_t height,
 {
     Document *self = (__bridge Document *)GB_get_user_data(gb);
     [self printImage:image height:height topMargin:top_margin bottomMargin:bottom_margin exposure:exposure];
+}
+
+static void setWorkboyTime(GB_gameboy_t *gb, time_t t)
+{
+    [[NSUserDefaults standardUserDefaults] setInteger:time(NULL) - t forKey:@"GBWorkboyTimeOffset"];
+}
+
+static time_t getWorkboyTime(GB_gameboy_t *gb)
+{
+    return time(NULL) - [[NSUserDefaults standardUserDefaults] integerForKey:@"GBWorkboyTimeOffset"];
 }
 
 static void audioCallback(GB_gameboy_t *gb, GB_sample_t *sample)
@@ -404,6 +415,7 @@ static void rumbleCallback(GB_gameboy_t *gb, double amp)
     unsigned time_to_alarm = GB_time_to_alarm(&gb);
     
     if (time_to_alarm) {
+        [NSUserNotificationCenter defaultUserNotificationCenter].delegate = (id)[NSApp delegate];
         NSUserNotification *notification = [[NSUserNotification alloc] init];
         NSString *friendlyName = [[self.fileName lastPathComponent] stringByDeletingPathExtension];
         NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:@"\\([^)]+\\)|\\[[^\\]]+\\]" options:0 error:nil];
@@ -568,6 +580,17 @@ static void rumbleCallback(GB_gameboy_t *gb, double amp)
     
     self.consoleWindow.title = [NSString stringWithFormat:@"Debug Console – %@", [[self.fileURL path] lastPathComponent]];
     self.debuggerSplitView.dividerColor = [NSColor clearColor];
+    if (@available(macOS 11.0, *)) {
+        self.memoryWindow.toolbarStyle = NSWindowToolbarStyleExpanded;
+        self.printerFeedWindow.toolbarStyle = NSWindowToolbarStyleUnifiedCompact;
+        [self.printerFeedWindow.toolbar removeItemAtIndex:1];
+        self.printerFeedWindow.toolbar.items.firstObject.image =
+            [NSImage imageWithSystemSymbolName:@"square.and.arrow.down"
+                      accessibilityDescription:@"Save"];
+        self.printerFeedWindow.toolbar.items.lastObject.image =
+            [NSImage imageWithSystemSymbolName:@"printer"
+                      accessibilityDescription:@"Print"];
+    }
         
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(updateHighpassFilter)
@@ -777,6 +800,9 @@ static void rumbleCallback(GB_gameboy_t *gb, double amp)
     }
     else if ([anItem action] == @selector(connectPrinter:)) {
         [(NSMenuItem*)anItem setState:accessory == GBAccessoryPrinter];
+    }
+    else if ([anItem action] == @selector(connectWorkboy:)) {
+        [(NSMenuItem*)anItem setState:accessory == GBAccessoryWorkboy];
     }
     else if ([anItem action] == @selector(toggleCheats:)) {
         [(NSMenuItem*)anItem setState:GB_cheats_enabled(&gb)];
@@ -1685,6 +1711,14 @@ static void rumbleCallback(GB_gameboy_t *gb, double amp)
     [self performAtomicBlock:^{
         accessory = GBAccessoryPrinter;
         GB_connect_printer(&gb, printImage);
+    }];
+}
+
+- (IBAction)connectWorkboy:(id)sender
+{
+    [self performAtomicBlock:^{
+        accessory = GBAccessoryWorkboy;
+        GB_connect_workboy(&gb, setWorkboyTime, getWorkboyTime);
     }];
 }
 

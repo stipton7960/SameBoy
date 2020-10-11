@@ -16,7 +16,7 @@ endif
 ifeq ($(PLATFORM),windows32)
 _ := $(shell chcp 65001)
 EXESUFFIX:=.exe
-NATIVE_CC = clang -IWindows -Wno-deprecated-declarations
+NATIVE_CC = clang -IWindows -Wno-deprecated-declarations --target=i386-pc-windows
 else
 EXESUFFIX:=
 NATIVE_CC := cc
@@ -36,7 +36,7 @@ ifeq ($(MAKECMDGOALS),)
 MAKECMDGOALS := $(DEFAULT)
 endif
 
-VERSION := 0.13.3
+include version.mk
 export VERSION
 CONF ?= debug
 SDL_AUDIO_DRIVER ?= sdl
@@ -106,6 +106,11 @@ ifeq ($(shell $(CC) -x c -c $(NULL) -o $(NULL) -Werror -Wpartial-availability 2>
 WARNINGS += -Wpartial-availability
 endif
 
+# GCC's implementation of this warning has false positives, so we skip it
+ifneq ($(shell $(CC) --version 2>&1 | grep "gcc"), )
+WARNINGS += -Wno-maybe-uninitialized
+endif
+
 CFLAGS += $(WARNINGS)
 
 CFLAGS += -std=gnu11 -D_GNU_SOURCE -DVERSION="$(VERSION)" -I. -D_USE_MATH_DEFINES
@@ -124,8 +129,8 @@ GL_CFLAGS := $(shell $(PKG_CONFIG) --cflags gl)
 GL_LDFLAGS := $(shell $(PKG_CONFIG) --libs gl || echo -lGL)
 endif
 ifeq ($(PLATFORM),windows32)
-CFLAGS += -IWindows -Drandom=rand
-LDFLAGS += -lmsvcrt -lcomdlg32 -luser32 -lSDL2main -Wl,/MANIFESTFILE:NUL
+CFLAGS += -IWindows -Drandom=rand --target=i386-pc-windows
+LDFLAGS += -lmsvcrt -lcomdlg32 -luser32 -lshell32 -lSDL2main -Wl,/MANIFESTFILE:NUL --target=i386-pc-windows
 SDL_LDFLAGS := -lSDL2
 GL_LDFLAGS := -lopengl32
 else
